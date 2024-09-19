@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix 3D Number Valleys</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: white; }
+        #matrixCanvas { width: 100%; height: 100vh; display: block; }
+    </style>
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <div id="matrixCanvas"></div>
+    <script>
+    const scene = new THREE.Scene();
+    const camera = new THREE.OrthographicCamera(window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2, 1, 1000);
+    const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector('#matrixCanvas') });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    // Adjust camera on resize
+    window.addEventListener('resize', () => {
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        camera.left = -window.innerWidth / 2;
+        camera.right = window.innerWidth / 2;
+        camera.top = window.innerHeight / 2;
+        camera.bottom = -window.innerHeight / 2;
+        camera.updateProjectionMatrix();
+    });
+
+    // Create valley
+    const valleyGeometry = new THREE.PlaneGeometry(1000, 1000, 100, 100);
+    for (let i = 0; i < valleyGeometry.vertices.length; i++) {
+        valleyGeometry.vertices[i].z = Math.random() * 50 - 25; // Random height for valley effect
+    }
+    valleyGeometry.rotateX(-Math.PI / 2);
+    const valleyMaterial = new THREE.MeshBasicMaterial({color: 0x00ff00, wireframe: true});
+    const valley = new THREE.Mesh(valleyGeometry, valleyMaterial);
+    scene.add(valley);
+
+    // Function to create a number
+    function createNumber() {
+        const numberGeo = new THREE.TextGeometry(Math.floor(Math.random() * 10).toString(), {
+            font: new THREE.FontLoader().parse(/* Load a font or use default */),
+            size: 5,
+            height: 1
+        });
+        const numberMat = new THREE.MeshBasicMaterial({color: 0x00ff00});
+        const numberMesh = new THREE.Mesh(numberGeo, numberMat);
+        numberMesh.position.x = Math.random() * 1000 - 500;
+        numberMesh.position.y = 500;
+        numberMesh.position.z = Math.random() * 50 - 25;
+        scene.add(numberMesh);
+        return numberMesh;
+    }
+
+    // Animation loop
+    function animate() {
+        requestAnimationFrame(animate);
+        // Rain effect
+        if(Math.random() < 0.02) { // Probability of creating a new number
+            const num = createNumber();
+            // Simple gravity effect
+            const speed = Math.random() * 3 + 1;
+            renderer.setAnimationLoop(() => {
+                num.position.y -= speed;
+                if(num.position.y < -500) scene.remove(num);
+            });
+        }
+        renderer.render(scene, camera);
+    }
+
+    animate();
+    </script>
+</body>
+</html>

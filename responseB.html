@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix 3D Numbers</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+    // Setup
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Valley
+    const geometry = new THREE.PlaneGeometry(1000, 1000, 100, 100);
+    for (let i = 0; i < geometry.vertices.length; i++) {
+        geometry.vertices[i].z = Math.sin(geometry.vertices[i].x / 50) * Math.cos(geometry.vertices[i].y / 50) * 50;
+    }
+    const material = new THREE.ShaderMaterial({
+        uniforms: {},
+        vertexShader: `
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `,
+        fragmentShader: `
+            varying vec2 vUv;
+            void main() {
+                float num = mod(floor(vUv.x * 100.0) + floor(vUv.y * 100.0), 10.0);
+                gl_FragColor = vec4(vec3(num / 10.0), 1.0);
+            }
+        `,
+        wireframe: true
+    });
+    const plane = new THREE.Mesh(geometry, material);
+    scene.add(plane);
+
+    // Numbers Rain
+    const numbers = [];
+    const numberGeometry = new THREE.TextGeometry('0123456789', {
+        font: new THREE.FontLoader().parse(/* JSON font data */), // You'll need to load a font
+        size: 1,
+        height: 0.1
+    });
+    const numberMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+
+    function createNumber() {
+        const number = new THREE.Mesh(numberGeometry, numberMaterial);
+        number.position.x = Math.random() * 1000 - 500;
+        number.position.y = 500;
+        number.position.z = Math.random() * 1000 - 500;
+        number.speed = Math.random() * 0.1 + 0.05;
+        scene.add(number);
+        numbers.push(number);
+    }
+
+    for(let i = 0; i < 500; i++) createNumber();
+
+    camera.position.z = 500;
+
+    // Animation loop
+    function animate() {
+        requestAnimationFrame(animate);
+        numbers.forEach(n => {
+            n.position.y -= n.speed;
+            if(n.position.y < -100) {
+                n.position.y = 500;
+            }
+        });
+        renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // Responsive handling
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+    </script>
+</body>
+</html>
